@@ -1,0 +1,56 @@
+name: Code checks
+
+on: [push]
+
+env:
+  POETRY_VERSION: 1.8.2
+
+jobs:
+  Tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        PYTHON_VERSION: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.PYTHON_VERSION }}
+
+      - name: Get full Python version
+        id: full-python-version
+        shell: bash
+        run: echo "version=$(python -c "import sys; print('-'.join(str(v) for v in sys.version_info))")" >> $GITHUB_OUTPUT
+
+      - name: Install poetry
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install poetry==${{env.POETRY_VERSION}}
+
+      - name: Configure poetry
+        shell: bash
+        run: poetry config virtualenvs.in-project true
+
+      - name: Set up cache
+        uses: actions/cache@v4
+        id: cache
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ steps.full-python-version.outputs.version }}-${{ hashFiles('**/poetry.lock') }}
+  
+      - name: Ensure cache is healthy
+        if: steps.cache.outputs.cache-hit == 'true'
+        shell: bash
+        run: poetry run pip --version >/dev/null 2>&1 || rm -rf .venv
+
+      - name: Test the lock file is up to date
+        run: python -m poetry check --lock
+
+      - name: Install the library
+        run: poetry install -v
+
+      - name: Test the library
+        run: poetry run pytest
+
