@@ -1,8 +1,6 @@
 import importlib.metadata
 import logging
-
 from typing import TypeAlias
-
 
 __version__ = importlib.metadata.version("longplexpy")
 """The current version of the the longplexpy package."""
@@ -18,6 +16,7 @@ FIND_LOG_FILES_SAMPLE_NAME_KEY: str = "s_name"
 
 SampleId: TypeAlias = str
 """A type alias for a sample ID."""
+
 
 def longplexpy_multiqc_plugin_start() -> None:
     """Setup all the configuration needed for this MultiQC plugin."""

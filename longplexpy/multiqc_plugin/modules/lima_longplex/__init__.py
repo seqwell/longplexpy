@@ -1,6 +1,5 @@
 import logging
 import re
-
 from typing import Any
 from typing import Callable
 from typing import Dict
@@ -8,10 +7,10 @@ from typing import Tuple
 from typing import TypedDict
 from typing import Union
 
-from multiqc.plots import bargraph  # type: ignore
-from multiqc.plots import table
 from multiqc.modules.base_module import BaseMultiqcModule  # type: ignore
 from multiqc.modules.base_module import ModuleNoSamplesFound
+from multiqc.plots import bargraph  # type: ignore
+from multiqc.plots import table
 
 from longplexpy.multiqc_plugin import FIND_LOG_FILES_CONTENTS_KEY as CONTENTS_KEY
 from longplexpy.multiqc_plugin import FIND_LOG_FILES_SAMPLE_NAME_KEY as SAMPLE_NAME_KEY
@@ -70,7 +69,10 @@ class LimaLongPlexModule(BaseMultiqcModule):
             "duplicate_pair_optical": (re.compile(r"DUPLICATE\sPAIR\sOPTICAL:\s(\d+)"), int),
             "duplicate_single_optical": (re.compile(r"DUPLICATE\sSINGLE\sOPTICAL:\s(\d+)"), int),
             "duplicate_non_primary": (re.compile(r"DUPLICATE\sNON\sPRIMARY:\s(\d+)"), int),
-            "duplicate_non_primary_optical": (re.compile(r"DUPLICATE\sNON\sPRIMARY\sOPTICAL:\s(\d+)"), int),
+            "duplicate_non_primary_optical": (
+                re.compile(r"DUPLICATE\sNON\sPRIMARY\sOPTICAL:\s(\d+)"),
+                int,
+            ),
             "duplicate_primary_total": (re.compile(r"DUPLICATE\sPRIMARY\sTOTAL:\s(\d+)"), int),
             "duplicate_total": (re.compile(r"DUPLICATE\sTOTAL:\s(\d+)"), int),
             "estimated_library_size": (re.compile(r"ESTIMATED_LIBRARY_SIZE:\s(\d+)"), int),
@@ -94,13 +96,25 @@ class LimaLongPlexModule(BaseMultiqcModule):
     def derive_metrics(metrics: LimaLongPlexMetric) -> LimaLongPlexMetric:
         """Derive custom metrics from the contents of a Lima LongPlex output file."""
         reads: int = metrics["paired"] + metrics["single"]
-        metrics["duplicate_optical_total"] = metrics["duplicate_pair_optical"] + metrics["duplicate_single_optical"]
-        metrics["duplicate_optical_fraction"] = reads and metrics["duplicate_optical_total"] / reads or 0.0
+        metrics["duplicate_optical_total"] = (
+            metrics["duplicate_pair_optical"] + metrics["duplicate_single_optical"]
+        )
+        metrics["duplicate_optical_fraction"] = (
+            reads and metrics["duplicate_optical_total"] / reads or 0.0
+        )
         metrics["duplicate_fraction"] = reads and metrics["duplicate_total"] / reads or 0.0
-        metrics["duplicate_paired_non_optical"] = metrics["duplicate_pair"] - metrics["duplicate_pair_optical"]
-        metrics["duplicate_single_non_optical"] = metrics["duplicate_single"] - metrics["duplicate_single_optical"]
-        metrics["duplicate_non_primary_non_optical"] = metrics["duplicate_non_primary"] - metrics["duplicate_non_primary_optical"]
-        metrics["non_duplicate"] = metrics["paired"] + metrics["single"] - metrics["duplicate_total"]
+        metrics["duplicate_paired_non_optical"] = (
+            metrics["duplicate_pair"] - metrics["duplicate_pair_optical"]
+        )
+        metrics["duplicate_single_non_optical"] = (
+            metrics["duplicate_single"] - metrics["duplicate_single_optical"]
+        )
+        metrics["duplicate_non_primary_non_optical"] = (
+            metrics["duplicate_non_primary"] - metrics["duplicate_non_primary_optical"]
+        )
+        metrics["non_duplicate"] = (
+            metrics["paired"] + metrics["single"] - metrics["duplicate_total"]
+        )
         return metrics
 
     def __init__(self) -> None:
@@ -194,11 +208,11 @@ class LimaLongPlexModule(BaseMultiqcModule):
                 + "artifacts:"
                 + "<br>"
                 + "<ul>"
-                + '<li><a href="https://core-genomics.blogspot.com/2016/05/increased-read-duplication-on-patterned.html" '
+                + '<li><a href="https://core-genomics.blogspot.com/2016/05/increased-read-duplication-on-patterned.html" ' # noqa: E501
                 + 'target="_blank">Core Genomics Post: Increased Read Duplication on Patterned '
                 + "Flowcells</a>"
                 + "</li>"
-                + '<li><a href="https://sequencing.qcfail.com/articles/illumina-patterned-flow-cells-generate-duplicated-sequences/" '
+                + '<li><a href="https://sequencing.qcfail.com/articles/illumina-patterned-flow-cells-generate-duplicated-sequences/" ' # noqa: E501
                 + 'target="_blank">QC Fail Post: Illumina Patterned Flow Cells Generate '
                 + "Duplicated Sequences</a>"
                 + "</li>"
