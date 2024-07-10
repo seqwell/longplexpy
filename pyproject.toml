@@ -17,8 +17,10 @@ classifiers   = [
 ]
 
 [tool.poetry.dependencies]
-python    = "^3.11"
-defopt    = "^6.4.0"
+multiqc = "^1"
+python  = "^3.11"
+defopt  = "^6.4.0"
+kaleido = "0.2.1"
 
 [tool.poetry.group.dev.dependencies]
 poetry      = "^1.8.2"
@@ -38,6 +40,12 @@ ipdb    = "^0.13.13"
 
 [tool.poetry.scripts]
 longplexpy = "longplexpy.main:run"
+
+[tool.poetry.plugins."multiqc.modules.v1"]
+"longplexpy" = "longplexpy.multiqc_plugin.modules.lima_longplex:LimaLongPlexModule"
+
+[tool.poetry.plugins."multiqc.hooks.v1"]
+"execution_start" = "longplexpy.multiqc_plugin:longplexpy_multiqc_plugin_start"
 
 [tool.poetry.urls]
 "Bug Tracker" = "https://github.com/seqwell/longplexpy/issues"
@@ -88,4 +96,3 @@ unfixable = ["B"]
 
 [tool.ruff.lint.isort]
 force-single-line = true
-
