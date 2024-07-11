@@ -3,47 +3,53 @@ import re
 from typing import Any
 from typing import Callable
 from typing import Dict
-from typing import Tuple
 from typing import TypedDict
-from typing import Union
 
-from multiqc.modules.base_module import BaseMultiqcModule  # type: ignore
-from multiqc.modules.base_module import ModuleNoSamplesFound
+from multiqc.base_module import BaseMultiqcModule  # type: ignore
+from multiqc.base_module import ModuleNoSamplesFound
 from multiqc.plots import bargraph  # type: ignore
 from multiqc.plots import table
 
+from longplexpy.multiqc_plugin import DEMUX_STAGE_I7_AND_I5
+from longplexpy.multiqc_plugin import DEMUX_STAGE_I7_OR_I5
 from longplexpy.multiqc_plugin import FIND_LOG_FILES_CONTENTS_KEY as CONTENTS_KEY
+from longplexpy.multiqc_plugin import FIND_LOG_FILES_PATH_KEY as FILE_PATH_KEY
 from longplexpy.multiqc_plugin import FIND_LOG_FILES_SAMPLE_NAME_KEY as SAMPLE_NAME_KEY
+from longplexpy.multiqc_plugin import DemuxStage
+from longplexpy.multiqc_plugin import DemuxStages
 from longplexpy.multiqc_plugin import SampleId
 
 log = logging.getLogger("multiqc")
 
 
+class LimaMetric(TypedDict):
+    input_reads: int
+
+
 class LimaLongPlexMetric(TypedDict):
-    command: str
-    optical_duplicate_distance: int
-    read: int
-    written: int
-    excluded: int
-    examined: int
-    paired: int
-    single: int
-    duplicate_pair: int
-    duplicate_single: int
-    duplicate_pair_optical: int
-    duplicate_single_optical: int
-    duplicate_non_primary: int
-    duplicate_non_primary_optical: int
-    duplicate_primary_total: int
-    duplicate_total: int
-    estimated_library_size: int
-    duplicate_optical_total: int
-    duplicate_optical_fraction: float
-    duplicate_fraction: float
-    duplicate_paired_non_optical: int
-    duplicate_single_non_optical: int
-    duplicate_non_primary_non_optical: int
-    non_duplicate: int
+    input_reads: int
+    i7_and_i5_demuxed: int
+    i7_or_i5_demuxed: int
+    failed_to_demux: int
+
+
+class MetricDefinition:
+    """Defines a metric found in a Lima output file"""
+
+    def __init__(
+        self,
+        name: str,
+        regex: re.Pattern,
+        converter: Callable[[Any], int] = int,
+        is_optional: bool = False,
+    ) -> None:
+        self.name = name
+        self.regex = regex
+        self.converter = converter
+        self.is_optional = is_optional
+
+    def search(self, text):
+        return self.regex.search(text)
 
 
 class LimaLongPlexModule(BaseMultiqcModule):
@@ -53,69 +59,94 @@ class LimaLongPlexModule(BaseMultiqcModule):
     """The configuration key for storing search patterns about Lima LongPlex outputs."""
 
     @staticmethod
-    def markdup_metric_patterns() -> Dict[str, Tuple[re.Pattern, Callable[[Any], Union[int, str]]]]:
+    def demux_metric_patterns() -> list[MetricDefinition]:
         """Patterns for parsing the metrics within Lima LongPlex outputs."""
-        return {
-            "command": (re.compile(r"COMMAND:\s(.*)"), str),
-            "optical_duplicate_distance": (re.compile(r"COMMAND:\s.*-d\s(\d+)"), int),
-            "read": (re.compile(r"READ:\s(\d+)"), int),
-            "written": (re.compile(r"WRITTEN:\s(\d+)"), int),
-            "excluded": (re.compile(r"EXCLUDED:\s(\d+)"), int),
-            "examined": (re.compile(r"EXAMINED:\s(\d+)"), int),
-            "paired": (re.compile(r"PAIRED:\s(\d+)"), int),
-            "single": (re.compile(r"SINGLE:\s(\d+)"), int),
-            "duplicate_pair": (re.compile(r"DUPLICATE\sPAIR:\s(\d+)"), int),
-            "duplicate_single": (re.compile(r"DUPLICATE\sSINGLE:\s(\d+)"), int),
-            "duplicate_pair_optical": (re.compile(r"DUPLICATE\sPAIR\sOPTICAL:\s(\d+)"), int),
-            "duplicate_single_optical": (re.compile(r"DUPLICATE\sSINGLE\sOPTICAL:\s(\d+)"), int),
-            "duplicate_non_primary": (re.compile(r"DUPLICATE\sNON\sPRIMARY:\s(\d+)"), int),
-            "duplicate_non_primary_optical": (
-                re.compile(r"DUPLICATE\sNON\sPRIMARY\sOPTICAL:\s(\d+)"),
-                int,
+        return [
+            MetricDefinition(
+                name="input_reads",
+                regex=re.compile(r"ZMWs input.*:\s([0-9]+)"),
             ),
-            "duplicate_primary_total": (re.compile(r"DUPLICATE\sPRIMARY\sTOTAL:\s(\d+)"), int),
-            "duplicate_total": (re.compile(r"DUPLICATE\sTOTAL:\s(\d+)"), int),
-            "estimated_library_size": (re.compile(r"ESTIMATED_LIBRARY_SIZE:\s(\d+)"), int),
-        }
+            MetricDefinition(
+                name="pass_thresholds",
+                regex=re.compile(r"ZMWs above all thresholds.*:\s([0-9]+)"),
+            ),
+            MetricDefinition(
+                name="fail_thresholds",
+                regex=re.compile(r"ZMWs below any threshold.*:\s([0-9]+)"),
+            ),
+            MetricDefinition(
+                name="below_min_length",
+                regex=re.compile(r"Below min length[\s]+:\s([0-9]+)"),
+            ),
+            MetricDefinition(
+                name="below_min_score",
+                regex=re.compile(r"Below min score[\s]+:\s([0-9]+)"),
+            ),
+            MetricDefinition(
+                name="below_min_end_score",
+                regex=re.compile(r"Below min end score[\s]+:\s([0-9]+)"),
+            ),
+            MetricDefinition(
+                name="below_min_passes",
+                regex=re.compile(r"Below min passes[\s]+:\s([0-9]+)"),
+            ),
+            MetricDefinition(
+                name="below_min_lead_score",
+                regex=re.compile(r"Below min score lead[\s]+:\s([0-9]+)"),
+            ),
+            MetricDefinition(
+                name="below_min_ref_span",
+                regex=re.compile(r"Below min ref span[\s]+:\s([0-9]+)"),
+            ),
+            MetricDefinition(
+                name="no_smrtbell",
+                regex=re.compile(r"Without SMRTbell adapter[\s]+:\s([0-9]+)"),
+            ),
+            MetricDefinition(
+                name="undesired_hybrids",
+                regex=re.compile(r"Undesired hybrids[\s]+:\s([0-9]+)"),
+                is_optional=True,
+            ),
+            MetricDefinition(
+                name="not_direct_neighbors",
+                regex=re.compile(r"Not direct neighbors[\s]+:\s([0-9]+)"),
+                is_optional=True,
+            ),
+        ]
 
     @staticmethod
-    def parse_contents(contents: str) -> LimaLongPlexMetric:
+    def parse_contents(contents: str) -> LimaMetric:
         """Parse the contents of a Lima LongPlex output file."""
-        metrics: LimaLongPlexMetric = dict()  # type: ignore
+        metrics: LimaMetric = dict()  # type: ignore
 
-        for metric, (regex, converter) in LimaLongPlexModule.markdup_metric_patterns().items():
-            match = regex.search(contents)
-            if match:
-                metrics[metric] = converter(match.group(1))  # type: ignore
+        for metric in LimaLongPlexModule.demux_metric_patterns():
+            match = metric.search(contents)
+            if match is not None:
+                metrics[metric.name] = metric.converter(match.group(1))  # type: ignore
 
-            # TODO: should we have an else? Or something stronger like a raised exception?
+            elif not metric.is_optional:
+                raise ValueError(
+                    f"Could not find expected metric, {metric.name}, in Lima LongPlex output"
+                )
 
         return metrics
 
     @staticmethod
-    def derive_metrics(metrics: LimaLongPlexMetric) -> LimaLongPlexMetric:
-        """Derive custom metrics from the contents of a Lima LongPlex output file."""
-        reads: int = metrics["paired"] + metrics["single"]
-        metrics["duplicate_optical_total"] = (
-            metrics["duplicate_pair_optical"] + metrics["duplicate_single_optical"]
-        )
-        metrics["duplicate_optical_fraction"] = (
-            reads and metrics["duplicate_optical_total"] / reads or 0.0
-        )
-        metrics["duplicate_fraction"] = reads and metrics["duplicate_total"] / reads or 0.0
-        metrics["duplicate_paired_non_optical"] = (
-            metrics["duplicate_pair"] - metrics["duplicate_pair_optical"]
-        )
-        metrics["duplicate_single_non_optical"] = (
-            metrics["duplicate_single"] - metrics["duplicate_single_optical"]
-        )
-        metrics["duplicate_non_primary_non_optical"] = (
-            metrics["duplicate_non_primary"] - metrics["duplicate_non_primary_optical"]
-        )
-        metrics["non_duplicate"] = (
-            metrics["paired"] + metrics["single"] - metrics["duplicate_total"]
-        )
+    def summarize_stage_data(stage_data: dict[DemuxStage, LimaMetric]) -> LimaLongPlexMetric:
+        metrics: LimaLongPlexMetric = dict()  # type: ignore
+        metrics["input_reads"] = max([m["input_reads"] for m in stage_data.values()])
+        metrics[DEMUX_STAGE_I7_AND_I5] = stage_data[DEMUX_STAGE_I7_AND_I5]["pass_thresholds"]
+        metrics[DEMUX_STAGE_I7_OR_I5] = stage_data[DEMUX_STAGE_I7_OR_I5]["pass_thresholds"]
+        metrics["failed_demux"] = stage_data[DEMUX_STAGE_I7_OR_I5]["fail_thresholds"]
         return metrics
+
+    @staticmethod
+    def derive_demux_stage(file_path: str) -> DemuxStage:
+        """Derive the DemuxStage from the the path to the Lima LongPlex output file."""
+        demux_stage = re.sub(".*demux_", "", file_path)
+        if demux_stage not in DemuxStages:
+            raise ValueError(f"Unrecognized Lima LongPlex demultiplexing stage, {demux_stage}")
+        return demux_stage
 
     def __init__(self) -> None:
         """Initialize the MultiQC Lima LongPlex module."""
@@ -127,42 +158,63 @@ class LimaLongPlexModule(BaseMultiqcModule):
             info=" is the use of Lima for the seqWell LongPlex assay.",
         )
 
-        metrics: Dict[SampleId, LimaLongPlexMetric] = dict()
+        metrics: Dict[SampleId, Dict[DemuxStage, LimaMetric]] = dict()
 
         for file in self.find_log_files(self.search_key):
+            metrics.setdefault(file[SAMPLE_NAME_KEY], {})
+            demux_stage = self.derive_demux_stage(file[FILE_PATH_KEY])
             parsed = self.parse_contents(file[CONTENTS_KEY])
-            metrics[file[SAMPLE_NAME_KEY]] = self.derive_metrics(parsed)
+            metrics[file[SAMPLE_NAME_KEY]][demux_stage] = parsed
 
         metrics = self.ignore_samples(data=metrics)
 
         if len(metrics) == 0:
             raise ModuleNoSamplesFound
 
-        self.write_data_file(data=metrics, fn="multiqc_longplexpy_limalongplex")
+        longplex_metrics = {
+            sample: self.summarize_stage_data(stages_dict)
+            for sample, stages_dict in metrics.items()
+        }
+
+        # This doesn't seem to actually write anything
+        self.write_data_file(data=longplex_metrics, fn="multiqc_longplexpy_limalongplex")
 
         # General Statistics ###########################################################
 
         # TODO: ZACH EDIT ALL THE BELOW
 
         headers = {
-            "duplicate_fraction": {
-                "title": "% Duplicates",
-                "description": "The percent of all types of duplicate reads.",
+            "input_reads": {
+                "title": "ZMWs Input",
+                "description": "The number of reads input to Lima.",
                 "min": 0,
-                "modify": lambda x: x * 100,
                 "format": "{:,.0f}",
-                "suffix": "%",
-                "scale": "RdYlGn-rev",
+                "scale": "RdYlGn",
             },
-            "estimated_library_size": {
-                "title": "Estimated Library Size",
-                "description": "The estimated library size after de-duplication.",
+            DEMUX_STAGE_I7_AND_I5: {
+                "title": f"{DEMUX_STAGE_I7_AND_I5} Demuxed",
+                "description": "The number of reads identified with I7 and I5 barcodes.",
                 "min": 0,
                 "format": "{:,.0f}",
+                "scale": "RdYlGn",
+            },
+            DEMUX_STAGE_I7_OR_I5: {
+                "title": f"{DEMUX_STAGE_I7_OR_I5} Demuxed",
+                "description": "The number of reads identified with either I7 or I5 barcodes.",
+                "min": 0,
+                "format": "{:,.0f}",
+                "scale": "RdYlGn",
+            },
+            "failed_demux": {
+                "title": "Failed Demux",
+                "description": "The number of reads identified with neither I7 nor I5 barcodes.",
+                "min": 0,
+                "format": "{:,.0f}",
+                "scale": "RdYlGn-rev",
             },
         }
 
-        self.general_stats_addcols(data=metrics, headers=headers)
+        self.general_stats_addcols(data=longplex_metrics, headers=headers)
 
         # Detailed Metrics #############################################################
 
@@ -208,11 +260,11 @@ class LimaLongPlexModule(BaseMultiqcModule):
                 + "artifacts:"
                 + "<br>"
                 + "<ul>"
-                + '<li><a href="https://core-genomics.blogspot.com/2016/05/increased-read-duplication-on-patterned.html" ' # noqa: E501
+                + '<li><a href="https://core-genomics.blogspot.com/2016/05/increased-read-duplication-on-patterned.html" '  # noqa: E501
                 + 'target="_blank">Core Genomics Post: Increased Read Duplication on Patterned '
                 + "Flowcells</a>"
                 + "</li>"
-                + '<li><a href="https://sequencing.qcfail.com/articles/illumina-patterned-flow-cells-generate-duplicated-sequences/" ' # noqa: E501
+                + '<li><a href="https://sequencing.qcfail.com/articles/illumina-patterned-flow-cells-generate-duplicated-sequences/" '  # noqa: E501
                 + 'target="_blank">QC Fail Post: Illumina Patterned Flow Cells Generate '
                 + "Duplicated Sequences</a>"
                 + "</li>"

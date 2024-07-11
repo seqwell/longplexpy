@@ -14,8 +14,20 @@ FIND_LOG_FILES_FILENAME_KEY: str = "fn"
 FIND_LOG_FILES_SAMPLE_NAME_KEY: str = "s_name"
 """The MultiQC configuration key for the inferred sample name of the metrics or logs files."""
 
+FIND_LOG_FILES_PATH_KEY: str = "root"
+"""The MultiQC configuration key for the path to the metrics or logs files."""
+
 SampleId: TypeAlias = str
 """A type alias for a sample ID."""
+
+DemuxStage: TypeAlias = str
+"""A type alias for a stage of demultiplexing."""
+
+DEMUX_STAGE_I7_AND_I5: DemuxStage = "i7_i5"
+DEMUX_STAGE_I7_OR_I5: DemuxStage = "either_i7_i5"
+
+DemuxStages: list[DemuxStage] = [DEMUX_STAGE_I7_AND_I5, DEMUX_STAGE_I7_OR_I5]
+"""The recognized Lima LongPlex demultiplexing stages."""
 
 
 def longplexpy_multiqc_plugin_start() -> None:
@@ -32,7 +44,7 @@ def longplexpy_multiqc_plugin_start() -> None:
     if "longplexpy/lima-longplex" not in config.sp:
         config.update_dict(
             config.sp,
-            {"longplexpy/lima-longplex": {"contents": "XXXXXXXX"}},  # TODO: how to autodetect file?
+            {"longplexpy/lima-longplex": {"fn": "*.lima.summary"}},
         )
 
     config.fn_clean_exts.extend([".lima", ".summary"])
