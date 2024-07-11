@@ -30,6 +30,7 @@ class LimaLongPlexMetric(TypedDict):
     input_reads: int
     i7_and_i5_demuxed: int
     i7_or_i5_demuxed: int
+    total_demuxed: int
     failed_to_demux: int
 
 
@@ -137,6 +138,10 @@ class LimaLongPlexModule(BaseMultiqcModule):
         metrics["input_reads"] = max([m["input_reads"] for m in stage_data.values()])
         metrics[DEMUX_STAGE_I7_AND_I5] = stage_data[DEMUX_STAGE_I7_AND_I5]["pass_thresholds"]
         metrics[DEMUX_STAGE_I7_OR_I5] = stage_data[DEMUX_STAGE_I7_OR_I5]["pass_thresholds"]
+        metrics["total_demuxed"] = (
+            stage_data[DEMUX_STAGE_I7_AND_I5]["pass_thresholds"]
+            + stage_data[DEMUX_STAGE_I7_OR_I5]["pass_thresholds"]
+        )
         metrics["failed_demux"] = stage_data[DEMUX_STAGE_I7_OR_I5]["fail_thresholds"]
         return metrics
 
@@ -181,7 +186,33 @@ class LimaLongPlexModule(BaseMultiqcModule):
 
         # General Statistics ###########################################################
 
-        # TODO: ZACH EDIT ALL THE BELOW
+        headers = {
+            "input_reads": {
+                "title": "ZMWs Input",
+                "description": "The number of reads input to Lima.",
+                "min": 0,
+                "format": "{:,.0f}",
+                "scale": "RdYlGn",
+            },
+            "total_demuxed": {
+                "title": "ZMWs Demuxed",
+                "description": "The number of reads successfully demultiplexed by Lima.",
+                "min": 0,
+                "format": "{:,.0f}",
+                "scale": "RdYlGn",
+            },
+            "failed_demux": {
+                "title": "ZMWs Failed Demux",
+                "description": "The number of reads identified with neither I7 nor I5 barcodes.",
+                "min": 0,
+                "format": "{:,.0f}",
+                "scale": "RdYlGn-rev",
+            },
+        }
+
+        self.general_stats_addcols(data=longplex_metrics, headers=headers)
+
+        # Detailed Metrics #############################################################
 
         headers = {
             "input_reads": {
@@ -205,8 +236,15 @@ class LimaLongPlexModule(BaseMultiqcModule):
                 "format": "{:,.0f}",
                 "scale": "RdYlGn",
             },
+            "total_demuxed": {
+                "title": "ZMWs Demuxed",
+                "description": "The number of reads successfully demultiplexed by Lima.",
+                "min": 0,
+                "format": "{:,.0f}",
+                "scale": "RdYlGn",
+            },
             "failed_demux": {
-                "title": "Failed Demux",
+                "title": "ZMWs Failed Demux",
                 "description": "The number of reads identified with neither I7 nor I5 barcodes.",
                 "min": 0,
                 "format": "{:,.0f}",
@@ -214,70 +252,18 @@ class LimaLongPlexModule(BaseMultiqcModule):
             },
         }
 
-        self.general_stats_addcols(data=longplex_metrics, headers=headers)
-
-        # Detailed Metrics #############################################################
-
-        headers = {
-            "estimated_library_size": {
-                "title": "Estimated Library Size",
-                "description": "The estimated library size after de-duplication.",
-                "min": 0,
-                "format": "{:,.0f}",
-            },
-            "optical_duplicate_distance": {
-                "title": "Optical Distance",
-                "description": "The optical distance for considering instrument duplicates.",
-                "min": 0,
-                "format": "{:,.0f}",
-            },
-            "duplicate_fraction": {
-                "title": "% Duplicates",
-                "description": "The percent of all types of duplicate reads.",
-                "min": 0,
-                "modify": lambda x: x * 100,
-                "format": "{:,.0f}",
-                "suffix": "%",
-                "scale": "RdYlGn-rev",
-            },
-            "duplicate_optical_fraction": {
-                "title": "% Optical Duplicates",
-                "description": "The percent of optical/clustering duplicate reads.",
-                "min": 0,
-                "modify": lambda x: x * 100,
-                "format": "{:,.0f}",
-                "suffix": "%",
-                "scale": "RdYlGn-rev",
-            },
-        }
-
         self.add_section(
-            name="Duplicate Marking",
-            anchor="tn_seq-samtools-markdup-metrics",
-            description=(
-                "Optical duplicates are due to either optical or clustering-based artifacts. "
-                + "See the following links to learn more about instrument-based duplicate "
-                + "artifacts:"
-                + "<br>"
-                + "<ul>"
-                + '<li><a href="https://core-genomics.blogspot.com/2016/05/increased-read-duplication-on-patterned.html" '  # noqa: E501
-                + 'target="_blank">Core Genomics Post: Increased Read Duplication on Patterned '
-                + "Flowcells</a>"
-                + "</li>"
-                + '<li><a href="https://sequencing.qcfail.com/articles/illumina-patterned-flow-cells-generate-duplicated-sequences/" '  # noqa: E501
-                + 'target="_blank">QC Fail Post: Illumina Patterned Flow Cells Generate '
-                + "Duplicated Sequences</a>"
-                + "</li>"
-                + "</ul>."
-            ),
+            name="Lima LongPlex Demultiplexing",
+            anchor="lima-longplex-demultiplexing",
+            description=("Summary of Lima demultiplexing results for a LongPlex pool. "),
             plot=table.plot(
-                data=metrics,
+                data=longplex_metrics,
                 headers=headers,
                 pconfig={
                     "namespace": self.name,
-                    "id": "tn_seq_samtools_markdup_metrics_table",
-                    "table_title": "Samtools: Duplicate Marked SAM Records (Alignments)",
-                    "sortRows": False,
+                    "id": "lima_longplex_metrics_table",
+                    "title": "ZMWs Demultiplexed with Lima",
+                    "sort_rows": False,
                 },
             ),
         )
@@ -286,29 +272,19 @@ class LimaLongPlexModule(BaseMultiqcModule):
 
         bargraph_config = {
             "namespace": self.name,
-            "id": "tn_seq_samtools_markdup_metrics_fraction",
-            "title": "Samtools: Duplicate Marked SAM Records (Alignments)",
+            "id": "lima_longplex_demux_fractions",
+            "title": "Lima LongPlex: Demultiplexing by Stage",
             "cpswitch": True,
-            "ylab": "% SAM Records",
+            "ylab": "% ZMWs",
         }
 
-        # TODO; Confirm that under all ways to run samtools markdup, these sum up to "all records"
         keys: Dict[str, Dict[str, str]] = {
-            "non_duplicate": {"name": "Non-Duplicates"},
-            "duplicate_pair_optical": {"name": "Optical Duplicates in Pairs"},
-            "duplicate_single_optical": {"name": "Optical Duplicates in Singletons"},
-            "duplicate_non_primary_optical": {"name": "Optical Non-Primary Duplicate"},
-            "duplicate_pair_non_optical": {"name": "Non-optical Duplicates in Pairs"},
-            "duplicate_single_non_optical": {"name": "Non-optical Duplicates in Singletons"},
-            "duplicate_non_primary_non_optical": {"name": "Non-Optical Non-Primary Duplicates"},
-            "excluded": {"name": "Ignored (QC fail or unmapped)"},
+            DEMUX_STAGE_I7_AND_I5: {"name": "ZMWs with I5 and I7"},
+            DEMUX_STAGE_I7_OR_I5: {"name": "ZMWs with I5 or I7"},
+            "failed_demux": {"name": "ZMWs without I5 or I7"},
         }
 
         self.add_section(
-            description=(
-                "For more information about the duplicate categories, see the "
-                + '<a href="https://www.htslib.org/doc/samtools-markdup.html#STATISTICS" '
-                + 'target="_blank">samtools documentation</a>. '
-            ),
-            plot=bargraph.plot(data=metrics, cats=keys, pconfig=bargraph_config),
+            description=(""),
+            plot=bargraph.plot(data=longplex_metrics, cats=keys, pconfig=bargraph_config),
         )
