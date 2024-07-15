@@ -1,0 +1,17 @@
+IdxFirst	IdxCombined	IdxFirstNamed	IdxCombinedNamed	Counts	MeanScore
+0	0	seqwell_UDI3_A12_P7	seqwell_UDI3_A12_P7	92592	94
+1	1	seqwell_UDI3_B12_P7	seqwell_UDI3_B12_P7	86682	95
+2	2	seqwell_UDI3_C12_P7	seqwell_UDI3_C12_P7	77353	93
+3	3	seqwell_UDI3_D12_P7	seqwell_UDI3_D12_P7	74757	96
+4	4	seqwell_UDI3_E12_P7	seqwell_UDI3_E12_P7	12880	92
+5	5	seqwell_UDI3_F12_P7	seqwell_UDI3_F12_P7	39520	93
+6	6	seqwell_UDI3_G12_P7	seqwell_UDI3_G12_P7	81872	93
+7	7	seqwell_UDI3_H12_P7	seqwell_UDI3_H12_P7	49498	92
+8	8	seqwell_UDI3_A12_P5	seqwell_UDI3_A12_P5	16653	96
+9	9	seqwell_UDI3_B12_P5	seqwell_UDI3_B12_P5	27684	96
+10	10	seqwell_UDI3_C12_P5	seqwell_UDI3_C12_P5	25545	90
+11	11	seqwell_UDI3_D12_P5	seqwell_UDI3_D12_P5	17179	97
+12	12	seqwell_UDI3_E12_P5	seqwell_UDI3_E12_P5	7762	95
+13	13	seqwell_UDI3_F12_P5	seqwell_UDI3_F12_P5	17288	98
+14	14	seqwell_UDI3_G12_P5	seqwell_UDI3_G12_P5	42420	93
+15	15	seqwell_UDI3_H12_P5	seqwell_UDI3_H12_P5	32173	95
