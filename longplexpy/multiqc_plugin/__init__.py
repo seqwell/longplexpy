@@ -23,12 +23,23 @@ SampleId: TypeAlias = str
 DemuxStage: TypeAlias = str
 """A type alias for a stage of demultiplexing."""
 
+WellId: TypeAlias = str
+"""A type alias for the well associated with a sample within a LongPlex pool."""
+
+AdapterId: TypeAlias = str
+"""A type alias for the adapter associated with a specific barcode (P5 or P7)"""
+
+AdapterSet: TypeAlias = str
+"""A set of AdapterIds"""
+
 DEMUX_STAGE_I7_AND_I5: DemuxStage = "i7_i5"
 DEMUX_STAGE_I7_OR_I5: DemuxStage = "either_i7_i5"
 
 DemuxStages: list[DemuxStage] = [DEMUX_STAGE_I7_AND_I5, DEMUX_STAGE_I7_OR_I5]
 """The recognized Lima LongPlex demultiplexing stages."""
 
+AdapterSetList: list[AdapterSet] = ["P5+P7", "P5", "P7"]
+"""List of recognized AdapterSets"""
 
 def longplexpy_multiqc_plugin_start() -> None:
     """Setup all the configuration needed for this MultiQC plugin."""
@@ -44,7 +55,10 @@ def longplexpy_multiqc_plugin_start() -> None:
     if "longplexpy/lima-longplex" not in config.sp:
         config.update_dict(
             config.sp,
-            {"longplexpy/lima-longplex": {"fn": "*.lima.summary"}},
+            {
+                "longplexpy/lima-longplex/summary": {"fn": "*.lima.summary"},
+                "longplexpy/lima-longplex/counts": {"fn": "*.lima.counts"},
+            },
         )
 
-    config.fn_clean_exts.extend([".lima", ".summary"])
+    config.fn_clean_exts.extend([".lima", ".summary", ".csv", "_demux_report"])
