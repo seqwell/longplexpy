@@ -20,3 +20,10 @@ Use the longplexpy at the CLI:
 ```console
 $ poetry run longplexpy hello --name Fulcrum
 ```
+
+## Testing Installation
+
+A test report can be generated with:
+```
+poetry run multiqc tests/data
+```
