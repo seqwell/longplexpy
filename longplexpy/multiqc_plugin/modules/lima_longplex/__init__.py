@@ -2,6 +2,7 @@ import csv
 import logging
 import re
 from collections import defaultdict
+from dataclasses import dataclass
 from itertools import chain
 from typing import Any
 from typing import Callable
@@ -114,20 +115,14 @@ class LimaLongPlexMetric(TypedDict):
     failed_to_demux: int
 
 
+@dataclass(frozen=True)
 class MetricDefinition:
     """Defines a metric found in a Lima output file"""
 
-    def __init__(
-        self,
-        name: str,
-        regex: re.Pattern,
-        converter: Callable[[Any], int] = int,
-        is_optional: bool = False,
-    ) -> None:
-        self.name = name
-        self.regex = regex
-        self.converter = converter
-        self.is_optional = is_optional
+    name: str
+    regex: re.Pattern
+    converter: Callable[[Any], int] = int
+    is_optional: bool = False
 
     def search(self, text: str) -> re.Match:
         return self.regex.search(text)
