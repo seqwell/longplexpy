@@ -29,7 +29,7 @@ WellId: TypeAlias = str
 AdapterId: TypeAlias = str
 """A type alias for the adapter associated with a specific barcode (P5 or P7)"""
 
-AdapterSet: TypeAlias = str
+AdapterSetName: TypeAlias = str
 """A set of AdapterIds"""
 
 DEMUX_STAGE_I7_AND_I5: DemuxStage = "i7_i5"
@@ -38,8 +38,9 @@ DEMUX_STAGE_I7_OR_I5: DemuxStage = "either_i7_i5"
 DemuxStages: list[DemuxStage] = [DEMUX_STAGE_I7_AND_I5, DEMUX_STAGE_I7_OR_I5]
 """The recognized Lima LongPlex demultiplexing stages."""
 
-AdapterSetList: list[AdapterSet] = ["P5+P7", "P5", "P7"]
+AdapterSetList: list[AdapterSetName] = ["P5+P7", "P5", "P7"]
 """List of recognized AdapterSets"""
+
 
 def longplexpy_multiqc_plugin_start() -> None:
     """Setup all the configuration needed for this MultiQC plugin."""

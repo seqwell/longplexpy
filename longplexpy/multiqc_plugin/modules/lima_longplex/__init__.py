@@ -1,6 +1,8 @@
 import csv
 import logging
 import re
+from collections import defaultdict
+from itertools import chain
 from typing import Any
 from typing import Callable
 from typing import Dict
@@ -18,7 +20,7 @@ from longplexpy.multiqc_plugin import FIND_LOG_FILES_CONTENTS_KEY as CONTENTS_KE
 from longplexpy.multiqc_plugin import FIND_LOG_FILES_PATH_KEY as FILE_PATH_KEY
 from longplexpy.multiqc_plugin import FIND_LOG_FILES_SAMPLE_NAME_KEY as SAMPLE_NAME_KEY
 from longplexpy.multiqc_plugin import AdapterId
-from longplexpy.multiqc_plugin import AdapterSet
+from longplexpy.multiqc_plugin import AdapterSetName
 from longplexpy.multiqc_plugin import DemuxStage
 from longplexpy.multiqc_plugin import DemuxStages
 from longplexpy.multiqc_plugin import SampleId
@@ -39,12 +41,28 @@ def derive_well_and_adapter(barcode: str) -> tuple[WellId, AdapterId]:
         return (match.group(1), match.group(2))
 
 
-def flatten(list_of_lists: list[list[Any]]) -> list[Any]:
-    return [sub_element for sublist in list_of_lists for sub_element in sublist]
-
-
 class LimaSummaryMetric(TypedDict):
-    """Metrics found in *.lima.summary files"""
+    """Metrics found in *.lima.summary files
+
+    Attributes:
+        input_reads: The number of reads in unmapped BAM input to LIMA.
+        pass_thresholds: The number of reads assigned to a single barcode (pair).
+        fail_thresholds: The number of reads not assigned to a single barcode (pair).
+        below_min_length: The number of reads with length below min-length after trimming
+            barcode(s).
+        below_min_score: The number of reads with barcode score(s) <= min-score.
+        below_min_end_score: The number of reads with at least one barcode score <= min-end-score.
+            Only relevant for reads with different barcodes in a pair.
+        below_min_passes: The number of reads with < min-passes.
+            Only relevant for CLR data, not CCS/HiFi data.
+        below_min_lead_score: The number of reads with a second best barcode score within score-lead
+            of the first best barcode.
+        below_min_ref_span: The number of reads with barcode(s) below min-ref-span.
+            This is the fraction of the barcode found in the read (ex. 0.4 for a 10bp barcode
+            means 4 bases were found).
+        no_smrtbell: The number of reads without a SMRTbell adapter
+        undesired_hybrids: The number of reads with mismatched (non-neighbor) barcodes.
+    """
 
     input_reads: int
     pass_thresholds: int
@@ -62,13 +80,13 @@ class LimaSummaryMetric(TypedDict):
 class LimaCountMetric:
     """Metrics for counts of each barcode combination output by Lima"""
 
-    def __init__(self, well_counts: dict[WellId, dict[AdapterSet, int]]) -> None:
+    def __init__(self, well_counts: dict[WellId, dict[AdapterSetName, int]]) -> None:
         self.well_counts = well_counts
 
     @classmethod
     def from_counts_text(cls, lima_counts_text: str) -> "LimaCountMetric":
         well_counts: dict = {}
-        for row in csv.reader(lima_counts_text.split("\n"), delimiter="\t"):
+        for row in csv.reader(lima_counts_text.splitlines(), delimiter="\t"):
             if len(row) == 0 or "Counts" in row:
                 continue
             else:
@@ -199,12 +217,12 @@ class LimaLongPlexModule(BaseMultiqcModule):
     def summarize_stage_count_data(
         stage_data: Iterable[LimaCountMetric],
     ) -> LimaCountMetric:
-        new_counts: dict = dict()
-        wells = set(flatten([list(d.well_counts.keys()) for d in stage_data]))
+        new_counts: dict[WellId, dict[AdapterSetName, int]] = defaultdict(dict)
+        wells = set(chain(*[list(d.well_counts.keys()) for d in stage_data]))
         for well in wells:
             new_counts[well] = {}
             adapter_sets = set(
-                flatten([list(d.well_counts.get(well, {}).keys()) for d in stage_data])
+                chain(*[list(d.well_counts.get(well, {}).keys()) for d in stage_data])
             )
             for adapter_set in adapter_sets:
                 new_counts[well][adapter_set] = sum(
@@ -272,20 +290,20 @@ class LimaLongPlexModule(BaseMultiqcModule):
             info=" is the use of Lima for the seqWell LongPlex assay.",
         )
 
-        lima_summary_metrics: Dict[SampleId, Dict[DemuxStage, LimaSummaryMetric]] = dict()
-        lima_count_metrics: Dict[SampleId, Dict[DemuxStage, LimaCountMetric]] = dict()
+        lima_summary_metrics: dict[SampleId, dict[DemuxStage, LimaSummaryMetric]] = defaultdict(
+            dict
+        )
+        lima_count_metrics: dict[SampleId, dict[DemuxStage, LimaCountMetric]] = defaultdict(dict)
 
         for file in self.find_log_files(self.summary_key):
             summary_sample_id: SampleId = self.derive_sample_id(file[SAMPLE_NAME_KEY])
             summary_demux_stage: DemuxStage = self.derive_demux_stage(file[FILE_PATH_KEY])
-            lima_summary_metrics.setdefault(summary_sample_id, {})
             summary_parsed = self.parse_summary_contents(file[CONTENTS_KEY])
             lima_summary_metrics[summary_sample_id][summary_demux_stage] = summary_parsed
 
         for file in self.find_log_files(self.counts_key):
             count_sample_id: SampleId = self.derive_sample_id(file[SAMPLE_NAME_KEY])
             count_demux_stage: DemuxStage = self.derive_demux_stage(file[FILE_PATH_KEY])
-            lima_count_metrics.setdefault(count_sample_id, {})
             counts_parsed = LimaCountMetric.from_counts_text(file[CONTENTS_KEY])
             lima_count_metrics[count_sample_id][count_demux_stage] = counts_parsed
 
@@ -427,7 +445,7 @@ class LimaLongPlexModule(BaseMultiqcModule):
             "title": "Lima LongPlex: Demultiplexing Summary by Well",
             "cpswitch": True,
             "ylab": "ZMWs",
-            "data_labels": pools
+            "data_labels": pools,
         }
 
         well_data = [summed_count_metrics[pool].well_counts for pool in pools]
@@ -441,5 +459,5 @@ class LimaLongPlexModule(BaseMultiqcModule):
 
         self.add_section(
             description="LongPlex Demultiplexing by Well",
-            plot=bargraph.plot(data=well_data, cats=well_keys, pconfig=per_pool_pconfig)
+            plot=bargraph.plot(data=well_data, cats=well_keys, pconfig=per_pool_pconfig),
         )
