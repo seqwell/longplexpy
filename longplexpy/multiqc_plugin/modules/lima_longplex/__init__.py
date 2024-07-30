@@ -113,6 +113,9 @@ class LimaLongPlexMetric(TypedDict):
     i5_demuxed: int
     total_demuxed: int
     failed_to_demux: int
+    percent_demuxed: float
+    undesired_hybrids: int
+    undesired_hybrids_percent: float
 
 
 @dataclass(frozen=True)
@@ -260,6 +263,15 @@ class LimaLongPlexModule(BaseMultiqcModule):
         lima_summary_metrics["failed_to_demux"] = stage_summary_data[DEMUX_STAGE_I7_OR_I5][
             "fail_thresholds"
         ]
+        lima_summary_metrics["percent_demuxed"] = (
+            lima_summary_metrics["total_demuxed"] / lima_summary_metrics["input_reads"]
+        )
+        lima_summary_metrics["undesired_hybrids"] = stage_summary_data[DEMUX_STAGE_I7_AND_I5][
+            "undesired_hybrids"
+        ]
+        lima_summary_metrics["undesired_hybrids_percent"] = (
+            lima_summary_metrics["undesired_hybrids"] / lima_summary_metrics["input_reads"]
+        )
         return lima_summary_metrics
 
     @staticmethod
@@ -333,21 +345,42 @@ class LimaLongPlexModule(BaseMultiqcModule):
                 "title": "ZMWs Input",
                 "description": "The number of reads input to Lima.",
                 "min": 0,
-                "format": "{:,.0f}",
-                "scale": "RdYlGn",
+                "format": "{:.0f}",
+                "scale": "blue",
             },
             "total_demuxed": {
                 "title": "ZMWs Demuxed",
                 "description": "The number of reads successfully demultiplexed by Lima.",
                 "min": 0,
-                "format": "{:,.0f}",
+                "format": "{:.0f}",
+                "scale": "RdYlGn",
+            },
+            "percent_demuxed": {
+                "title": "ZMWs Demuxed (%)",
+                "description": "The percent of reads successfully demultiplexed by Lima.",
+                "min": 0,
+                "format": "{:.1%}",
                 "scale": "RdYlGn",
             },
             "failed_to_demux": {
                 "title": "ZMWs Failed Demux",
                 "description": "The number of reads identified with neither I7 nor I5 barcodes.",
                 "min": 0,
-                "format": "{:,.0f}",
+                "format": "{:.0f}",
+                "scale": "RdYlGn-rev",
+            },
+            "undesired_hybrids": {
+                "title": "Undesired Hybrids",
+                "description": "Reads with mismatched barcodes",
+                "min": 0,
+                "format": "{:.0f}",
+                "scale": "RdYlGn-rev",
+            },
+            "undesired_hybrids_percent": {
+                "title": "Undesired Hybrids (%)",
+                "description": "The percent of reads with mismatched barcodes",
+                "min": 0,
+                "format": "{:.1%}",
                 "scale": "RdYlGn-rev",
             },
         }
@@ -361,28 +394,28 @@ class LimaLongPlexModule(BaseMultiqcModule):
                 "title": "ZMWs Input",
                 "description": "The number of reads input to Lima.",
                 "min": 0,
-                "format": "{:,.0f}",
-                "scale": "RdYlGn",
+                "format": "{:.0f}",
+                "scale": "blue",
             },
             "i7_and_i5_demuxed": {
                 "title": "i7 and i5 Demuxed",
                 "description": "The number of reads identified with i7 and i5 barcodes.",
                 "min": 0,
-                "format": "{:,.0f}",
+                "format": "{:.0f}",
                 "scale": "RdYlGn",
             },
             "i7_demuxed": {
                 "title": "i7 Demuxed",
                 "description": "The number of reads identified with either i7 barcodes.",
                 "min": 0,
-                "format": "{:,.0f}",
+                "format": "{:.0f}",
                 "scale": "RdYlGn",
             },
             "i5_demuxed": {
                 "title": "i5 Demuxed",
                 "description": "The number of reads identified with either i5 barcodes.",
                 "min": 0,
-                "format": "{:,.0f}",
+                "format": "{:.0f}",
                 "scale": "RdYlGn",
             },
             "failed_to_demux": {
