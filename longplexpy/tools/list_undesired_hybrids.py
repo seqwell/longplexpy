@@ -17,8 +17,9 @@ def list_undesired_hybrids(
     """List undesired hybrids in lima.report file
 
     Args:
-        lima_report: the lima.report file which identifies undesired hybrids
-        read_name_suffix: String to append to ZMW names to generate read names.
+        lima_report: the lima.report file which identifies undesired hybrids.
+        output: the text output file where the list of undesired hybrids will be written.
+        read_name_suffix: string to append to ZMW names to generate read names.
             Lima may remove read suffixes to generate ZMW names.
             This parameter can be used to reconstruct read names as they appear in the input BAM.
             Default = "/ccs"
