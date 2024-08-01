@@ -35,4 +35,4 @@ def validate_header(input_fieldnames: Iterable[str], required_fields: Iterable[s
     """
     missing_fields = [field for field in required_fields if field not in input_fieldnames]
     if len(missing_fields) != 0:
-        raise ValueError(f"Input is missing required fields: {", ".join(missing_fields)}")
+        raise ValueError(f"Input is missing required fields: {', '.join(missing_fields)}")
