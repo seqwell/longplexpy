@@ -21,7 +21,7 @@ multiqc = "^1"
 python  = "^3.11"
 defopt  = "^6.4.0"
 kaleido = "0.2.1"
-fgpyo = "^0.4.0"
+fgpyo = "0.3.0"
 
 [tool.poetry.group.dev.dependencies]
 poetry      = "^1.8.2"

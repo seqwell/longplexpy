@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Iterator
 
 from longplexpy.lima import HYBRID_STATUS
 from longplexpy.lima import LimaReportMetric
@@ -23,7 +24,7 @@ def list_undesired_hybrids(
     """
 
     with open(output, mode="w") as out_file:
-        report_reader = LimaReportMetric.read(lima_report)
+        report_reader: Iterator[LimaReportMetric] = LimaReportMetric.read(lima_report)
         for report_row in report_reader:
             if status_from_report_row(report_row) == HYBRID_STATUS:
                 out_file.write(f"{report_row.ZMW}{read_name_suffix}\n")

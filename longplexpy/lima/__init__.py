@@ -15,13 +15,7 @@ class LimaReportMetric(Metric["LimaReportMetric"]):
     IdxLowestNamed: str
     IdxHighestNamed: str
 
-
-@dataclass(frozen=True)
-class UndesiredHybrid(Metric["UndesiredHybrid"]):
-    read_name: str
-
-
-def status_from_report_row(lima_report: LimaReportMetric) -> str:
+def status_from_report_row(lima_report: "LimaReportMetric") -> str:
     """Get ZMW filter status from row (as dict) of lima.report
 
     Args:
