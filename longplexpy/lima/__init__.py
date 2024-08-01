@@ -1,23 +1,35 @@
+from dataclasses import dataclass
 from typing import Iterable
+
+from fgpyo.util.metric import Metric
 
 from longplexpy.barcodes import well_from_barcode
 
 PASS_STATUS = "pass"
 HYBRID_STATUS = "undesired_hybrid"
-FIRST_BARCODE = "IdxLowestNamed"
-SECOND_BARCODE = "IdxHighestNamed"
-ZMW_NAME = "ZMW"
-
-REPORT_FIELDS = [FIRST_BARCODE, SECOND_BARCODE, ZMW_NAME]
 
 
-def status_from_report_row(row: dict[str, str]) -> str:
+@dataclass(frozen=True)
+class LimaReportMetric(Metric["LimaReportMetric"]):
+    ZMW: str
+    IdxLowestNamed: str
+    IdxHighestNamed: str
+
+
+@dataclass(frozen=True)
+class UndesiredHybrid(Metric["UndesiredHybrid"]):
+    read_name: str
+
+
+def status_from_report_row(lima_report: LimaReportMetric) -> str:
     """Get ZMW filter status from row (as dict) of lima.report
 
     Args:
         row: row from lima.report file as a dictionary
     """
-    if well_from_barcode(row[FIRST_BARCODE]) != well_from_barcode(row[SECOND_BARCODE]):
+    if well_from_barcode(lima_report.IdxHighestNamed) != well_from_barcode(
+        lima_report.IdxLowestNamed
+    ):
         return HYBRID_STATUS
     else:
         return PASS_STATUS

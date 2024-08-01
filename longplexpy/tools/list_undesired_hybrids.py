@@ -1,11 +1,8 @@
-import csv
 from pathlib import Path
 
 from longplexpy.lima import HYBRID_STATUS
-from longplexpy.lima import REPORT_FIELDS
-from longplexpy.lima import ZMW_NAME
+from longplexpy.lima import LimaReportMetric
 from longplexpy.lima import status_from_report_row
-from longplexpy.lima import validate_header
 
 
 def list_undesired_hybrids(
@@ -25,9 +22,8 @@ def list_undesired_hybrids(
             Default = "/ccs"
     """
 
-    with open(lima_report) as report_file, open(output, mode="w") as out_file:
-        report_reader = csv.DictReader(report_file, delimiter="\t")
-        validate_header(report_reader.fieldnames, REPORT_FIELDS)
-        for row in report_reader:
-            if status_from_report_row(row) == HYBRID_STATUS:
-                out_file.write(f"{row[ZMW_NAME]}{read_name_suffix}\n")
+    with open(output, mode="w") as out_file:
+        report_reader = LimaReportMetric.read(lima_report)
+        for report_row in report_reader:
+            if status_from_report_row(report_row) == HYBRID_STATUS:
+                out_file.write(f"{report_row.ZMW}{read_name_suffix}\n")
