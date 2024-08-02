@@ -5,9 +5,9 @@ from typing import List
 
 import defopt
 
-from longplexpy.tools.hello import hello
+from longplexpy.tools.list_undesired_hybrids import list_undesired_hybrids
 
-_tools: List[Callable] = [hello]
+_tools: List[Callable] = [list_undesired_hybrids]
 
 
 def setup_logging(level: str = "INFO") -> None:
