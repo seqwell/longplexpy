@@ -2,7 +2,6 @@ import pytest
 
 import longplexpy.lima as lima
 from longplexpy.lima import LimaReportMetric
-from longplexpy.lima import status_from_report_row
 
 
 @pytest.mark.parametrize(
@@ -58,5 +57,5 @@ from longplexpy.lima import status_from_report_row
         ),
     ],
 )
-def test_status_from_report_row(report_row: LimaReportMetric, status: str) -> None:
-    assert status_from_report_row(report_row) == status
+def test_status_from_report_metric(report_row: LimaReportMetric, status: str) -> None:
+    assert report_row.status == status

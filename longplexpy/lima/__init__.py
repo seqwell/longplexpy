@@ -19,22 +19,21 @@ class LimaReportMetric(Metric["LimaReportMetric"]):
         IdxLowestNamed: the name of the barcode occurring first in the read
         IdxHighestNamed: the name of the barcode occuring last in the read
     """
+
     ZMW: str
     IdxLowestNamed: str
     IdxHighestNamed: str
 
-def status_from_report_row(lima_report: "LimaReportMetric") -> str:
-    """Get ZMW filter status from row (as dict) of lima.report
-
-    Args:
-        row: row from lima.report file as a dictionary
-    """
-    if well_from_barcode(lima_report.IdxHighestNamed) != well_from_barcode(
-        lima_report.IdxLowestNamed
-    ):
-        return HYBRID_STATUS
-    else:
-        return PASS_STATUS
+    @property
+    def status(self) -> str:
+        """Get ZMW filter status from row (as dict) of lima.report
+        Args:
+            row: row from lima.report file as a dictionary
+        """
+        if well_from_barcode(self.IdxHighestNamed) != well_from_barcode(self.IdxLowestNamed):
+            return HYBRID_STATUS
+        else:
+            return PASS_STATUS
 
 
 def validate_header(input_fieldnames: Iterable[str], required_fields: Iterable[str]) -> None:
