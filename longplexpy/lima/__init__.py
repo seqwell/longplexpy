@@ -11,6 +11,14 @@ HYBRID_STATUS = "undesired_hybrid"
 
 @dataclass(frozen=True)
 class LimaReportMetric(Metric["LimaReportMetric"]):
+    """A dataclass that captures relevant portions of the *.lima.report
+
+    Attributes:
+        ZMW: name of the ZMW Lima is reporting on. Note this will not necessarily match the
+            read name in the input BAM. Notably "/ccs" will be stripped off.
+        IdxLowestNamed: the name of the barcode occurring first in the read
+        IdxHighestNamed: the name of the barcode occuring last in the read
+    """
     ZMW: str
     IdxLowestNamed: str
     IdxHighestNamed: str
