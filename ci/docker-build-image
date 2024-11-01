@@ -39,12 +39,11 @@ SOURCE_DIR=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
 
 LONGPLEXPY_VERSION="$(git describe --exact-match 2>/dev/null || git describe --abbrev=7 --tags --dirty)"
 
-pushd "${SOURCE_DIR}"/..
-
-docker build \
-    ${DOCKER_NO_CACHE} \
-    --tag seqwell/longplexpy:"${LONGPLEXPY_VERSION}" \
-    --file docker/Dockerfile \
-    .
-
-popd
+(
+    cd "${SOURCE_DIR}"/.. && \
+    docker build \
+        ${DOCKER_NO_CACHE} \
+        --tag seqwell/longplexpy:"${LONGPLEXPY_VERSION}" \
+        --file docker/Dockerfile \
+        .
+)
