@@ -25,3 +25,11 @@ To generate a code coverage report locally, run the following command:
 ```console
 poetry run coverage html
 ```
+
+# Building the Docker Image
+
+The docker image can be built by running:
+
+```console
+ci/docker-build-image
+```
