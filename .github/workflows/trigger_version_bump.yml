@@ -1,0 +1,41 @@
+name: Trigger Version Bump
+
+permissions:
+  pull-requests: write
+  contents: write
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version to be applied. Must be greater than current version.
+        required: true
+        type: string
+
+jobs:
+  update_version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-tags: true
+          fetch-depth: 0
+
+      - name: Update pyproject.toml, commit
+        id: update-version
+        run: |
+          PR_BRANCH=ci_release_branch_$(date +"%Y%d%m.%H%M%S")
+          git checkout -b ${PR_BRANCH}
+          ci/update-version -v ${{ inputs.version }} -c
+          echo "PR_BRANCH=${PR_BRANCH}" >> ${GITHUB_OUTPUT}
+      
+      - name: Push and Open Pull Request
+        run: |
+          git push --set-upstream origin ${{ steps.update-version.outputs.PR_BRANCH }}
+          gh pr create \
+            --base main \
+            --head ${{ steps.update-version.outputs.PR_BRANCH }} \
+            --title "$(git log -1 --pretty=%B)" \
+            --body "Update version in pyproject.toml to trigger release."
