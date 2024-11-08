@@ -11,6 +11,9 @@ on:
         description: Version to be applied. Must be greater than current version.
         required: true
         type: string
+  push:
+    branches:
+      - zn_versioning # TODO: Remove on push trigger
 
 jobs:
   update_version:
@@ -25,17 +28,19 @@ jobs:
 
       - name: Update pyproject.toml, commit
         id: update-version
+        # TODO: Switch version from 9.9.9 to ${{ inputs.version }}
         run: |
           PR_BRANCH=ci_release_branch_$(date +"%Y%d%m.%H%M%S")
           git checkout -b ${PR_BRANCH}
-          ci/update-version -v ${{ inputs.version }} -c
+          ci/update-version -v 9.9.9 -c
           echo "PR_BRANCH=${PR_BRANCH}" >> ${GITHUB_OUTPUT}
       
       - name: Push and Open Pull Request
+        # TODO: Switch base from zn_versioning to main
         run: |
           git push --set-upstream origin ${{ steps.update-version.outputs.PR_BRANCH }}
           gh pr create \
-            --base main \
+            --base zn_versioning \
             --head ${{ steps.update-version.outputs.PR_BRANCH }} \
             --title "$(git log -1 --pretty=%B)" \
             --body "Update version in pyproject.toml to trigger release."
