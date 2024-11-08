@@ -6,6 +6,7 @@ Usage: $0 [-hcv]
 
 Update version stored in pyproject.toml file. Optionally, commit change.
 New version must be greater than the previous version.
+Requires poetry be installed.
 
 Options:
     -h  Display this information.
@@ -40,20 +41,7 @@ else
     fi
 fi
 
-echo "Updating pyproject.toml to version: ${VERSION}"
-
-case "$OSTYPE" in
-    darwin*|bsd*)
-        echo "Using BSD sed style"
-        sed_no_backup=( -i '' )
-        ;;
-    *)
-        echo "Using GNU sed style"
-        sed_no_backup=( -i )
-        ;;
-esac
-
-sed -E "${sed_no_backup[@]}" "s/^(version[[:space:]]+=[[:space:]])\"(.*)\"/\1\"${VERSION}\"/" pyproject.toml
+poetry version "${VERSION}"
 
 if [ -n "${COMMIT}" ];
 then
