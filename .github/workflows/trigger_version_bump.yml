@@ -29,7 +29,9 @@ jobs:
       - name: Update pyproject.toml, commit
         id: update-version
         # TODO: Switch version from 9.9.9 to ${{ inputs.version }}
+        # TODO: Remove git checkout zn_versioning
         run: |
+          git checkout zn_versioning
           PR_BRANCH=ci_release_branch_$(date +"%Y%d%m.%H%M%S")
           git checkout -b ${PR_BRANCH}
           ci/update-version -v 9.9.9 -c
