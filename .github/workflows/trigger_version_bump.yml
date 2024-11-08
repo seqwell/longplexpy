@@ -11,6 +11,12 @@ on:
         description: Version to be applied. Must be greater than current version.
         required: true
         type: string
+  push:
+    branches:
+      - zn_versioning #TODO: remove on push trigger
+
+env:
+  POETRY_VERSION: 1.8.2
 
 jobs:
   update_version:
@@ -29,23 +35,32 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
 
+      - name: Install poetry
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install poetry==${{env.POETRY_VERSION}}
+
       - name: Update pyproject.toml, commit
         id: update-version
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # TODO: Switch version from 9.9.9 to ${{ inputs.version }}
+        # TODO: Remove git checkout zn_versioning
         run: |
+          git checkout zn_versioning
           PR_BRANCH=ci_release_branch_$(date +"%Y%d%m.%H%M%S")
           git checkout -b ${PR_BRANCH}
-          ci/update-version -v ${{ inputs.version }} -c
+          ci/update-version -v 9.9.9 -c
           echo "PR_BRANCH=${PR_BRANCH}" >> ${GITHUB_OUTPUT}
       
       - name: Push and Open Pull Request
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # TODO: Switch base from zn_versioning to main
         run: |
           git push --set-upstream origin ${{ steps.update-version.outputs.PR_BRANCH }}
           gh pr create \
-            --base main \
+            --base zn_versioning \
             --head ${{ steps.update-version.outputs.PR_BRANCH }} \
             --title "$(git log -1 --pretty=%B)" \
             --body "Update version in pyproject.toml to trigger release."
