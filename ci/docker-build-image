@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() { cat << EOF
+Usage: $0 [-hn]
+
+Build Docker image from this local repository.
+
+The image will be tagged with the version of this repository by setting the
+environmental variable LONGPLEXPY_VERSION using a Git-aware command.
+
+Any unstaged changes within this local repository will be included in the Docker
+image. Unstaged changes will dirty the version string for the Docker image with
+a '-dirty' suffix.
+
+Ensure your Docker daemon is running with these minimum resource allocations:
+
+    CPUs:               8
+    Memory:             8 Gb
+    Swap:               1 Gb
+    Disk Image Size:    60 Gb (default, less may also work)
+
+Options:
+    -h  Display this information.
+    -n  Do not use the Docker cache during build. (Optional)
+EOF
+}
+
+DOCKER_NO_CACHE="";
+while getopts "hn" OPTION; do
+    case "$OPTION" in
+        h) usage; exit 1;;
+        n) DOCKER_NO_CACHE="--no-cache";;
+        [?]) usage; (>&2 echo "Exception: Unknown options ${*}."); exit 1;;
+    esac
+done
+
+SOURCE_DIR=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
+
+LONGPLEXPY_VERSION="$(git describe --exact-match 2>/dev/null || git describe --abbrev=7 --tags --dirty)"
+
+(
+    cd "${SOURCE_DIR}"/.. && \
+    docker build \
+        ${DOCKER_NO_CACHE} \
+        --tag seqwell/longplexpy:"${LONGPLEXPY_VERSION}" \
+        --file docker/Dockerfile \
+        .
+)
