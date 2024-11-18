@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() { cat << EOF
+Usage: $0 [-hcv]
+
+Update version stored in pyproject.toml file. Optionally, commit change.
+New version must be greater than the previous version.
+Requires poetry be installed.
+
+Options:
+    -h  Display this information.
+    -c  Specify the change should be committed. (Optional)
+    -v  A specific version to be used in updating nextflow.config and to apply as a tag if requested.
+EOF
+}
+
+COMMIT=""; VERSION=""
+while getopts "hcv:" OPTION; do
+    case "$OPTION" in
+        h) usage; exit 1;;
+        c) COMMIT=true;;
+        v) VERSION=${OPTARG};;
+        \?) usage; (>&2 echo "Exception: Unknown option $OPTION."); exit 1;;
+    esac
+done
+
+if [ -z "${VERSION}" ];
+then
+    usage; (>&2 echo "Exception: No version supplied."); exit 1
+fi
+
+if [ -z "$(git tag --merged main --sort=taggerdate)" ];
+then
+    echo "No previous version found, proceeding with ${VERSION}"
+else
+    PREVIOUS_VERSION=$(git tag --merged main --sort=taggerdate | grep "^[0-9\.]\+$" | tail -n 1)
+    if ! printf "%s\n%s\n" "${PREVIOUS_VERSION}" "${VERSION}" | sort -V -C; then
+        echo "ERROR ${VERSION} is less than the previous version, ${PREVIOUS_VERSION}." 1>&2
+        exit 1
+    fi
+fi
+
+poetry version "${VERSION}"
+
+if [ -n "${COMMIT}" ];
+then
+    echo "Generating a new commit!"
+    git add pyproject.toml
+    git commit -m "chore(${VERSION}): update pyproject version"
+fi
