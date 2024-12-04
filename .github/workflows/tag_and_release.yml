@@ -25,11 +25,11 @@ jobs:
         id: check_version_bump
         run: |
           MESSAGE="${{ github.event.head_commit.message }}"
-          BUMP_REGEX="^chore\([0-9]\.[0-9]\.[0-9]\): update pipeline version.*"
+          BUMP_REGEX="^chore\([0-9]\.[0-9]\.[0-9]\): update pyproject version.*"
           BUMP_MATCH=$(echo ${MESSAGE} | egrep "${BUMP_REGEX}") || true # Prevent error code on no match
           if [ -n "${BUMP_MATCH}" ]
           then
-            NEW_VERSION=$(echo $BUMP_MATCH | sed -E "s/chore\(|\): update pipeline version.*//g")
+            NEW_VERSION=$(echo $BUMP_MATCH | sed -E "s/chore\(|\): update pyproject version.*//g")
             echo "release_commit_check=true" >> $GITHUB_OUTPUT
             echo "new_version=${NEW_VERSION}" >> $GITHUB_OUTPUT
           fi
@@ -84,6 +84,6 @@ jobs:
           name: ${{ needs.release_commit_check.outputs.new_version }}
           body: |
             ${{ needs.draft_changelog.outputs.release_body }}
-          draft: true #TODO: Switch to False
+          draft: true # TODO: Switch to False
           prerelease: false
 
