@@ -8,7 +8,7 @@ permissions:
 on:
   push:
     branches:
-      - zn_release
+      - main
 
 jobs:
   release_commit_check:
@@ -84,6 +84,5 @@ jobs:
           name: ${{ needs.release_commit_check.outputs.new_version }}
           body: |
             ${{ needs.draft_changelog.outputs.release_body }}
-          draft: true # TODO: Switch to False
+          draft: false
           prerelease: false
-
