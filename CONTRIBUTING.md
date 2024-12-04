@@ -33,3 +33,25 @@ The docker image can be built by running:
 ```console
 ci/docker-build-image
 ```
+
+# Create a New Release
+
+## Trigger a Version Bump
+
+- Navigate to the [Trigger Version Bump Action](https://github.com/seqwell/longplexpy/actions/workflows/trigger_version_bump.yml).
+- Select "Run Workflow" and enter a new version of the form "#.#.#".
+Ensure the new version is higher than the current version.
+See [Semantic Versioning](https://semver.org/) for help selecting the next version.
+
+## Merge the Versioning PR
+
+- The trigger version bump action will open a new PR with a title similar to "chore(#.#.#): update pyproject version"
+- Perform a squash merge on this PR to commit the version bump to main
+
+## Confirm the Release was Created
+- Navigate to [Add Version Tag Action](https://github.com/seqwell/longplexpy/actions/workflows/tag_and_release.yml).
+- You should see a workflow run with a title similar to the PR title, "chore(#.#.#): update pyproject version"
+- Select the action and confirm all four jobs completed successfully.
+- If the jobs completed successfully, a new tag matching the "#.#.#" pattern should have been added to main.
+You can check the [tags page](https://github.com/seqwell/longplexpy/tags)
+- If the jobs completed successfully, there should also be a new release on the [releases page](https://github.com/seqwell/longplexpy/releases).
