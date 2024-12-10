@@ -3,8 +3,7 @@ name: Build and Deploy
 on:
   push:
     branches:
-      # TODO: Switch back to main
-      - zn_dockerhub
+      - main
     tags:
       - '\d+.\d+.\d+'
 
@@ -26,6 +25,5 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Build, Tag, and Push Docker Image
         run: |
-          # TODO: Add -p (push) flag
-          ci/docker-build-image
+          ci/docker-build-image -p
 
