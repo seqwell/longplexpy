@@ -55,3 +55,10 @@ See [Semantic Versioning](https://semver.org/) for help selecting the next versi
 - If the jobs completed successfully, a new tag matching the "#.#.#" pattern should have been added to main.
 You can check the [tags page](https://github.com/seqwell/longplexpy/tags)
 - If the jobs completed successfully, there should also be a new release on the [releases page](https://github.com/seqwell/longplexpy/releases).
+
+
+## Confirm the Docker Image was Built and Deployed
+- Navigate to [Build and Deploy Action](https://github.com/seqwell/longplexpy/actions/workflows/build_and_deploy.yml)
+- You should see two workflow runs with titles similar to the PR title, "chore(#.#.#): update pyproject version".
+One should have a triggering event as the new tag "#.#.#" and one should have a triggering event as `main`.
+- A green checkmark on these actions indicates the docker image was built, tagged, and pushed to the [seqwell/longplexpy](https://registry.hub.docker.com/r/seqwell/longplexpy) repo on Dockerhub.
