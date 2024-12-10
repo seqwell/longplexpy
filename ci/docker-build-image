@@ -23,14 +23,16 @@ Ensure your Docker daemon is running with these minimum resource allocations:
 Options:
     -h  Display this information.
     -n  Do not use the Docker cache during build. (Optional)
+    -p  Push image to Dockerhub, requires docker login (Optional)
 EOF
 }
 
 DOCKER_NO_CACHE="";
-while getopts "hn" OPTION; do
+while getopts "hnp" OPTION; do
     case "$OPTION" in
         h) usage; exit 1;;
         n) DOCKER_NO_CACHE="--no-cache";;
+        p) PUSH_IMAGES="--push";;
         [?]) usage; (>&2 echo "Exception: Unknown options ${*}."); exit 1;;
     esac
 done
@@ -45,5 +47,5 @@ LONGPLEXPY_VERSION="$(git describe --exact-match 2>/dev/null || git describe --a
         ${DOCKER_NO_CACHE} \
         --tag seqwell/longplexpy:"${LONGPLEXPY_VERSION}" \
         --file docker/Dockerfile \
-        .
+        "${PUSH_IMAGES}" .
 )
