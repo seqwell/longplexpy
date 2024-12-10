@@ -57,7 +57,7 @@ You can check the [tags page](https://github.com/seqwell/longplexpy/tags)
 - If the jobs completed successfully, there should also be a new release on the [releases page](https://github.com/seqwell/longplexpy/releases).
 
 
-## Confirm the Docker Image was Build and Deployed
+## Confirm the Docker Image was Built and Deployed
 - Navigate to [Build and Deploy Action](https://github.com/seqwell/longplexpy/actions/workflows/build_and_deploy.yml)
 - You should see two workflow runs with titles similar to the PR title, "chore(#.#.#): update pyproject version".
 One should have a triggering event as the new tag "#.#.#" and one should have a triggering event as `main`.
