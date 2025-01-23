@@ -385,7 +385,7 @@ class LimaLongPlexModule(BaseMultiqcModule):
             },
         }
 
-        self.general_stats_addcols(data=longplex_summary_metrics, headers=headers)
+        self.general_stats_addcols(longplex_summary_metrics, headers=headers)
 
         # Detailed Metrics #############################################################
 
@@ -454,8 +454,8 @@ class LimaLongPlexModule(BaseMultiqcModule):
         }
 
         keys: Dict[str, Dict[str, str]] = {
-            "i7_demuxed": {"name": "ZMWs with i7"},
             "i7_and_i5_demuxed": {"name": "ZMWs with i5 and i7"},
+            "i7_demuxed": {"name": "ZMWs with i7"},
             "i5_demuxed": {"name": "ZMWs with i5"},
             "failed_to_demux": {"name": "ZMWs without i5 or i7"},
         }
@@ -479,9 +479,9 @@ class LimaLongPlexModule(BaseMultiqcModule):
         well_data = [summed_count_metrics[pool].well_counts for pool in pools]
 
         well_keys: Dict[str, Dict[str, str]] = {
-            "P7": {"name": "ZMWs with i7"},
             "P7+P5": {"name": "ZMWs with i5 and i7"},
             "P5+P7": {"name": "ZMWs with i5 and i7"},
+            "P7": {"name": "ZMWs with i7"},
             "P5": {"name": "ZMWs with i5"},
         }
 
