@@ -1,6 +1,6 @@
 [tool.poetry]
 name         = "longplexpy"
-version      = "0.2.0"
+version      = "0.2.1"
 description  = "Python tools for the LongPlex assay"
 readme       = "README.md"
 authors      = [
