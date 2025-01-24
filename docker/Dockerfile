@@ -8,6 +8,7 @@ RUN apt-get update \
         curl \
         python3.11-dev \
         python3.11-full \
+        procps \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Poetry
