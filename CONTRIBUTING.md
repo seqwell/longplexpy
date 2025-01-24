@@ -48,12 +48,17 @@ See [Semantic Versioning](https://semver.org/) for help selecting the next versi
 - The trigger version bump action will open a new PR with a title similar to "chore(#.#.#): update pyproject version"
 - Perform a squash merge on this PR to commit the version bump to main
 
-## Confirm the Release was Created
-- Navigate to [Add Version Tag Action](https://github.com/seqwell/longplexpy/actions/workflows/tag_and_release.yml).
-- You should see a workflow run with a title similar to the PR title, "chore(#.#.#): update pyproject version"
-- Select the action and confirm all four jobs completed successfully.
-- If the jobs completed successfully, a new tag matching the "#.#.#" pattern should have been added to main.
-You can check the [tags page](https://github.com/seqwell/longplexpy/tags)
+## Create the Release
+- In your local repository, checkout main, pull the latest changes, add and push the release tag.
+    ```console
+    git checkout main
+    git pull
+    git tag -a "#.#.#" -m "Release #.#.#"
+    git push --tags
+    ```
+- If completed successfully, a new tag matching the "#.#.#" pattern should have been added to main.
+You can check the [tags page](https://github.com/seqwell/longplexpy/tags).
+This will trigger the [Create Release Action](https://github.com/seqwell/longplexpy/actions/workflows/create_release.yml).
 - If the jobs completed successfully, there should also be a new release on the [releases page](https://github.com/seqwell/longplexpy/releases).
 
 
