@@ -17,7 +17,7 @@ classifiers   = [
 ]
 
 [tool.poetry.dependencies]
-multiqc = "^1"
+multiqc = "1.21"
 python  = "^3.11"
 defopt  = "^6.4.0"
 kaleido = "0.2.1"
