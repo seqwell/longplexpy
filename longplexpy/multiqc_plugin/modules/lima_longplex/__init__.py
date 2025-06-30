@@ -87,7 +87,11 @@ class LimaCountMetric:
     @classmethod
     def from_counts_text(cls, lima_counts_text: str) -> "LimaCountMetric":
         well_counts: dict = {}
-        for row in csv.reader(lima_counts_text.splitlines(), delimiter="\t"):
+        lines = lima_counts_text.splitlines()
+        # Skip the second row (index 1) if it exists
+        if len(lines) > 1:
+            lines = [lines[0]] + lines[2:]
+        for row in csv.reader(lines, delimiter="\t"):
             if len(row) == 0 or "Counts" in row:
                 continue
             else:
